@@ -10,7 +10,7 @@ namespace EnthParser
 {
     public class EnthParser
     {
-        ModelFile LoadedFile { get; set; }
+        public ModelFile LoadedFile { get; set; }
 
         public EnthParser() { }
 
@@ -276,7 +276,19 @@ namespace EnthParser
         }
     }
 
+    public class LOD
+    {
+        public List<Mesh> meshes;
 
+    }
+
+
+    public class Mesh
+    {
+        public List<Vector3> Points;
+        public List<string> AddressesUsed;
+
+    }
 
     public class ModelFile
     {
