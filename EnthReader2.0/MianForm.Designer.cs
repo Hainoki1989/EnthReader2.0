@@ -1,6 +1,6 @@
 ﻿namespace EnthReader2._0
 {
-    partial class Form1
+    partial class MianForm
     {
         /// <summary>
         /// Required designer variable.
@@ -29,12 +29,13 @@
         private void InitializeComponent()
         {
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.t_hexDisplay = new System.Windows.Forms.TextBox();
-            this.c_MeshBox = new System.Windows.Forms.ComboBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.t_LODDisplay = new System.Windows.Forms.TreeView();
-            this.b_LoadFile = new System.Windows.Forms.Button();
             this.b_ExportOBJ = new System.Windows.Forms.Button();
+            this.b_LoadFile = new System.Windows.Forms.Button();
+            this.t_LODDisplay = new System.Windows.Forms.TreeView();
+            this.label1 = new System.Windows.Forms.Label();
+            this.c_MeshBox = new System.Windows.Forms.ComboBox();
+            this.t_hexDisplay = new System.Windows.Forms.TextBox();
+            this.b_viewHex = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -49,6 +50,7 @@
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.Controls.Add(this.b_viewHex);
             this.splitContainer1.Panel1.Controls.Add(this.b_ExportOBJ);
             this.splitContainer1.Panel1.Controls.Add(this.b_LoadFile);
             this.splitContainer1.Panel1.Controls.Add(this.t_LODDisplay);
@@ -62,22 +64,33 @@
             this.splitContainer1.SplitterDistance = 229;
             this.splitContainer1.TabIndex = 0;
             // 
-            // t_hexDisplay
+            // b_ExportOBJ
             // 
-            this.t_hexDisplay.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.t_hexDisplay.Location = new System.Drawing.Point(0, 0);
-            this.t_hexDisplay.Multiline = true;
-            this.t_hexDisplay.Name = "t_hexDisplay";
-            this.t_hexDisplay.Size = new System.Drawing.Size(612, 524);
-            this.t_hexDisplay.TabIndex = 0;
+            this.b_ExportOBJ.Location = new System.Drawing.Point(16, 294);
+            this.b_ExportOBJ.Name = "b_ExportOBJ";
+            this.b_ExportOBJ.Size = new System.Drawing.Size(185, 23);
+            this.b_ExportOBJ.TabIndex = 4;
+            this.b_ExportOBJ.Text = "Export OBJ";
+            this.b_ExportOBJ.UseVisualStyleBackColor = true;
+            this.b_ExportOBJ.Click += new System.EventHandler(this.b_ExportOBJ_Click);
             // 
-            // c_MeshBox
+            // b_LoadFile
             // 
-            this.c_MeshBox.FormattingEnabled = true;
-            this.c_MeshBox.Location = new System.Drawing.Point(86, 10);
-            this.c_MeshBox.Name = "c_MeshBox";
-            this.c_MeshBox.Size = new System.Drawing.Size(115, 21);
-            this.c_MeshBox.TabIndex = 0;
+            this.b_LoadFile.Location = new System.Drawing.Point(16, 265);
+            this.b_LoadFile.Name = "b_LoadFile";
+            this.b_LoadFile.Size = new System.Drawing.Size(185, 23);
+            this.b_LoadFile.TabIndex = 3;
+            this.b_LoadFile.Text = "Load File";
+            this.b_LoadFile.UseVisualStyleBackColor = true;
+            this.b_LoadFile.Click += new System.EventHandler(this.b_LoadFile_Click);
+            // 
+            // t_LODDisplay
+            // 
+            this.t_LODDisplay.Location = new System.Drawing.Point(16, 69);
+            this.t_LODDisplay.Name = "t_LODDisplay";
+            this.t_LODDisplay.Size = new System.Drawing.Size(185, 190);
+            this.t_LODDisplay.TabIndex = 2;
+            this.t_LODDisplay.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.t_LODDisplay_AfterSelect);
             // 
             // label1
             // 
@@ -88,33 +101,32 @@
             this.label1.TabIndex = 1;
             this.label1.Text = "Vertex Block";
             // 
-            // t_LODDisplay
+            // c_MeshBox
             // 
-            this.t_LODDisplay.Location = new System.Drawing.Point(16, 37);
-            this.t_LODDisplay.Name = "t_LODDisplay";
-            this.t_LODDisplay.Size = new System.Drawing.Size(185, 190);
-            this.t_LODDisplay.TabIndex = 2;
-            this.t_LODDisplay.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.t_LODDisplay_AfterSelect);
+            this.c_MeshBox.FormattingEnabled = true;
+            this.c_MeshBox.Location = new System.Drawing.Point(86, 10);
+            this.c_MeshBox.Name = "c_MeshBox";
+            this.c_MeshBox.Size = new System.Drawing.Size(115, 21);
+            this.c_MeshBox.TabIndex = 0;
             // 
-            // b_LoadFile
+            // t_hexDisplay
             // 
-            this.b_LoadFile.Location = new System.Drawing.Point(16, 234);
-            this.b_LoadFile.Name = "b_LoadFile";
-            this.b_LoadFile.Size = new System.Drawing.Size(185, 23);
-            this.b_LoadFile.TabIndex = 3;
-            this.b_LoadFile.Text = "Load File";
-            this.b_LoadFile.UseVisualStyleBackColor = true;
-            this.b_LoadFile.Click += new System.EventHandler(this.b_LoadFile_Click);
+            this.t_hexDisplay.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.t_hexDisplay.Location = new System.Drawing.Point(0, 0);
+            this.t_hexDisplay.Multiline = true;
+            this.t_hexDisplay.Name = "t_hexDisplay";
+            this.t_hexDisplay.Size = new System.Drawing.Size(612, 524);
+            this.t_hexDisplay.TabIndex = 0;
             // 
-            // b_ExportOBJ
+            // b_viewHex
             // 
-            this.b_ExportOBJ.Location = new System.Drawing.Point(16, 264);
-            this.b_ExportOBJ.Name = "b_ExportOBJ";
-            this.b_ExportOBJ.Size = new System.Drawing.Size(185, 23);
-            this.b_ExportOBJ.TabIndex = 4;
-            this.b_ExportOBJ.Text = "Export OBJ";
-            this.b_ExportOBJ.UseVisualStyleBackColor = true;
-            this.b_ExportOBJ.Click += new System.EventHandler(this.b_ExportOBJ_Click);
+            this.b_viewHex.Location = new System.Drawing.Point(16, 40);
+            this.b_viewHex.Name = "b_viewHex";
+            this.b_viewHex.Size = new System.Drawing.Size(185, 23);
+            this.b_viewHex.TabIndex = 5;
+            this.b_viewHex.Text = "View Hex ";
+            this.b_viewHex.UseVisualStyleBackColor = true;
+            this.b_viewHex.Click += new System.EventHandler(this.b_viewHex_Click);
             // 
             // Form1
             // 
@@ -144,6 +156,7 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox c_MeshBox;
         private System.Windows.Forms.TextBox t_hexDisplay;
+        private System.Windows.Forms.Button b_viewHex;
     }
 }
 

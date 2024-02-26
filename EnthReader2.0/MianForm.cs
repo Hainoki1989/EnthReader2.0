@@ -16,12 +16,12 @@ using EnthParser;
 
 namespace EnthReader2._0
 {
-    public partial class Form1 : Form
+    public partial class MianForm : Form
     {
         string selectedFileName;
         EnthParser.EnthParser FileParser;
 
-        public Form1()
+        public MianForm()
         {
             InitializeComponent();
 
@@ -199,6 +199,13 @@ namespace EnthReader2._0
             }
 
             Console.WriteLine();
+        }
+
+        private void b_viewHex_Click(object sender, EventArgs e)
+        {
+            HexView hexView = new HexView();
+            hexView.DisplayHexData(FileParser.LoadedFile.VertexBlocks[c_MeshBox.SelectedIndex].ReadBytesForDebug.ToArray(), FileParser.LoadedFile.VertexBlocks[c_MeshBox.SelectedIndex].STARTADDRESSFORTHIS);
+            hexView.Show();
         }
     }
 }
