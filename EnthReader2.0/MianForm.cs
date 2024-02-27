@@ -117,7 +117,7 @@ namespace EnthReader2._0
                                 using (StreamWriter writer = new StreamWriter($"{subFolder}\\output.obj"))
                                 {
                                     foreach(var vertex in vertexG.VertexList)
-                                        writer.WriteLine($"v {vertex.X} {vertex.Y} {vertex.Z}");
+                                        writer.WriteLine($"v {vertex.X.ToString(CultureInfo.CurrentCulture)} {vertex.Y.ToString(CultureInfo.CurrentCulture)} {vertex.Z.ToString(CultureInfo.CurrentCulture)}");
            
                                 }
 
