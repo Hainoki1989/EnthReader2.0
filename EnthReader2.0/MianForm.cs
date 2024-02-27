@@ -72,20 +72,27 @@ namespace EnthReader2._0
 
         private void b_ExportOBJ_Click(object sender, EventArgs e)
         {
-            List<LOD> lods = new List<LOD>();
+
 
             for(int i=0; i<FileParser.LoadedFile.LODAddresses.Count; i++)
             {
                 int NextListStartAddress = (i == FileParser.LoadedFile.LODAddresses.Count-1) ? 0x999999 : FileParser.LoadedFile.LODAddresses[(i + 1)][0];
 
-                LOD lod = new LOD();
-                lod.meshes = new List<Mesh>();
+                string[] outputname = selectedFileName.Split('\\');
+
+                string OutputFolder = $"{DateTime.Now.ToString("ddMMyyyhhmmss")}\\{outputname.Last()}";
+
+                if(!Directory.Exists(OutputFolder))
+                    Directory.CreateDirectory(OutputFolder);
+
+
 
                 for(int j=0; j < FileParser.LoadedFile.LODAddresses[i].Count; j++)
                 {
-                    Mesh mesh = new Mesh();
-                    mesh.AddressesUsed = new List<string>();
-                    mesh.Points = new List<System.Numerics.Vector3>();
+                    string OutputLod = $"{OutputFolder}\\LOD{i}";
+
+                    if (!Directory.Exists(OutputLod))
+                        Directory.CreateDirectory(OutputLod);
 
                     int startAddress = FileParser.LoadedFile.LODAddresses[i][j];
                     int endAddress = (j == FileParser.LoadedFile.LODAddresses[i].Count - 1) ? NextListStartAddress : FileParser.LoadedFile.LODAddresses[i][j + 1];
@@ -94,46 +101,41 @@ namespace EnthReader2._0
 
                     try
                     {
+                        
                         foreach(var group in matchingGroups)
                         {
+                            
+                            string subFolder = $"{OutputLod}\\group{group.STARTADDRESSFORTHIS}";
 
-                            mesh.AddressesUsed.Add($"0x{group.STARTADDRESSFORTHIS.ToString("X")}");
+                            if (!Directory.Exists(subFolder))
+                                Directory.CreateDirectory(subFolder);
+
+
 
                             foreach (var vertexG in group.VertexDataList)
-                                mesh.Points.AddRange(vertexG.VertexList);
+                            {
+                                using (StreamWriter writer = new StreamWriter($"{subFolder}\\output.obj"))
+                                {
+                                    foreach(var vertex in vertexG.VertexList)
+                                        writer.WriteLine($"v {vertex.X} {vertex.Y} {vertex.Z}");
+           
+                                }
+
+                            }
                         }
                     }
                     catch(Exception ex) 
                     { 
                     }
 
-                    lod.meshes.Add(mesh);
+   
 
                 }
 
-                lods.Add(lod);
+
             }
 
 
-            for (int i = 0; i < lods.Count; i++)
-            {
-                using (StreamWriter writer = new StreamWriter($"{selectedFileName}{i}.obj"))
-                {
-                    for (int j = 0; j < lods[i].meshes.Count; j++)
-                    {
-                        //writer.WriteLine($"o Mesh{j}");
-
-                        foreach (var point in lods[i].meshes[j].Points)
-                        {
-                            writer.WriteLine($"v {point.X} {point.Y} {point.Z}");
-                        }
-
-                        writer.WriteLine("");
-
-
-                    }
-                }
-            }
 
         }
 
