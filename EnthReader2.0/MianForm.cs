@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Globalization;
@@ -72,15 +73,16 @@ namespace EnthReader2._0
 
         private void b_ExportOBJ_Click(object sender, EventArgs e)
         {
+            string[] outputname = selectedFileName.Split('\\');
+            string OutputFolder = $"{DateTime.Now.ToString("ddMMyyyhhmmss")}\\{outputname.Last()}";
 
-
-            for(int i=0; i<FileParser.LoadedFile.LODAddresses.Count; i++)
+            for (int i=0; i<FileParser.LoadedFile.LODAddresses.Count; i++)
             {
                 int NextListStartAddress = (i == FileParser.LoadedFile.LODAddresses.Count-1) ? 0x999999 : FileParser.LoadedFile.LODAddresses[(i + 1)][0];
 
-                string[] outputname = selectedFileName.Split('\\');
+                
 
-                string OutputFolder = $"{DateTime.Now.ToString("ddMMyyyhhmmss")}\\{outputname.Last()}";
+               
 
                 if(!Directory.Exists(OutputFolder))
                     Directory.CreateDirectory(OutputFolder);
@@ -101,11 +103,11 @@ namespace EnthReader2._0
 
                     try
                     {
-                        
+                        int counter = 0;
                         foreach(var group in matchingGroups)
                         {
                             
-                            string subFolder = $"{OutputLod}\\group{group.STARTADDRESSFORTHIS}";
+                            string subFolder = $"{OutputLod}\\{j}";
 
                             if (!Directory.Exists(subFolder))
                                 Directory.CreateDirectory(subFolder);
@@ -114,7 +116,8 @@ namespace EnthReader2._0
 
                             foreach (var vertexG in group.VertexDataList)
                             {
-                                using (StreamWriter writer = new StreamWriter($"{subFolder}\\output.obj"))
+                                counter++;
+                                using (StreamWriter writer = new StreamWriter($"{subFolder}\\{counter}_output_0x{group.STARTADDRESSFORTHIS.ToString("X")}.obj"))
                                 {
                                     foreach(var vertex in vertexG.VertexList)
                                         writer.WriteLine($"v {vertex.X.ToString(CultureInfo.GetCultureInfo("en-GB"))} {vertex.Y.ToString(CultureInfo.GetCultureInfo("en-GB"))} {vertex.Z.ToString(CultureInfo.GetCultureInfo("en-GB"))}");
