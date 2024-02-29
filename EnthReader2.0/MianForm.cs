@@ -15,6 +15,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using EnthParser;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using static EnthParser.Models;
 
 
 
@@ -24,6 +26,7 @@ namespace EnthReader2._0
     {
         string selectedFileName;
         //EnthParser.EnthParser FileParser;
+        EnthParser2 enthParser2;
 
         public MianForm()
         {
@@ -34,46 +37,59 @@ namespace EnthReader2._0
         private void Form1_Load(object sender, EventArgs e)
         {
             //FileParser = new EnthParser.EnthParser();
-            t_hexDisplay.Font = new Font("Courier New", 10, FontStyle.Regular);
-            t_hexDisplay.ScrollBars = ScrollBars.Vertical;
+            //t_hexDisplay.Font = new Font("Courier New", 10, FontStyle.Regular);
+            //t_hexDisplay.ScrollBars = ScrollBars.Vertical;
         }
+
+
+        private void PopulateTreeView(JObject json, TreeNodeCollection nodes)
+        {
+            foreach (var property in json.Properties())
+            {
+                TreeNode node = nodes.Add(property.Name);
+
+                if (property.Value.Type == JTokenType.Object)
+                {
+                    PopulateTreeView((JObject)property.Value, node.Nodes);
+                }
+                else if (property.Value.Type == JTokenType.Array)
+                {
+                    PopulateTreeView((JArray)property.Value, node.Nodes);
+                }
+                else
+                {
+                    node.Nodes.Add(property.Value.ToString());
+                }
+            }
+        }
+
+        private void PopulateTreeView(JArray jsonArray, TreeNodeCollection nodes)
+        {
+            for (int i = 0; i < jsonArray.Count; i++)
+            {
+                TreeNode node = nodes.Add($"[{i}]");
+
+                if (jsonArray[i].Type == JTokenType.Object)
+                {
+                    PopulateTreeView((JObject)jsonArray[i], node.Nodes);
+                }
+                else if (jsonArray[i].Type == JTokenType.Array)
+                {
+                    PopulateTreeView((JArray)jsonArray[i], node.Nodes);
+                }
+                else
+                {
+                    node.Nodes.Add(jsonArray[i].ToString());
+                }
+            }
+        }
+
 
         private void b_LoadFile_Click(object sender, EventArgs e)
         {
-            /*FileParser = new EnthParser.EnthParser();
-            t_LODDisplay.Nodes.Clear();
 
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "CAR Files (*.car)|*.car|All Files (*.*)|*.*";
 
-            if (openFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                // Get the selected file name
-                selectedFileName = openFileDialog.FileName;
-                FileParser.LoadModelFile(selectedFileName);
-
-                for (int i = 0; i < FileParser.LoadedFile.VertexBlocks.Count; i++)
-                {
-                   c_MeshBox.Items.Add(i);
-                }
-
-                for(int i=0; i<FileParser.LoadedFile.LODAddresses.Count; i++)
-                {
-                    TreeNode parentNode = new TreeNode($"Group {i + 1}");
-
-                    foreach (int address in FileParser.LoadedFile.LODAddresses[i])
-                    {
-                        TreeNode childNode = new TreeNode($"0x{address.ToString("X")}");
-
-                        parentNode.Nodes.Add(childNode);
-                    }
-
-                    t_LODDisplay.Nodes.Add(parentNode);
-                }
-
-            }*/
-
-            EnthParser2 enthParser2 = new EnthParser2();
+            enthParser2 = new EnthParser2();
 
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "CAR Files (*.car)|*.car|All Files (*.*)|*.*";
@@ -84,48 +100,63 @@ namespace EnthReader2._0
 
                 enthParser2.LoadFile(selectedFileName);
 
+                string json = JsonConvert.SerializeObject(enthParser2.enthFile, Formatting.Indented);
+
+                //t_hexDisplay.Text = json;
+
+                JObject jsonObject = JObject.Parse(json);
+
+                PopulateTreeView(jsonObject, t_LODDisplay.Nodes);
+
+
+                File.WriteAllText("DEBUGOUTPUT.json",json);
+
             }
+
+            
+            
+
+            //t_hexDisplay.Text = stringBuilder.ToString();
+
+            
+                
+                
         }
 
         private void b_ExportOBJ_Click(object sender, EventArgs e)
         {
 
-           /* var result = FileParser.LoadedFile.ToOBJ();
+            FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
 
-            string json = JsonConvert.SerializeObject(result, Formatting.Indented);
-
-            Console.WriteLine("here");
-
-            string OutputFile = $"{DateTime.Now.ToString("ddMMyyyyhhmmss")}";
-
-            if (!Directory.Exists(OutputFile))
-                Directory.CreateDirectory(OutputFile);
-
-
-            string jsonFile = $"{OutputFile}\\{result.ModelName}.json";
-            File.WriteAllText(jsonFile, json);
-
-            foreach (var mesh in result.modelLods[0].Meshes) 
-            {
-                for(int i =0; i<mesh.SubMeshes.Count; i++)
-                {
-                    int counter = 0;
-                    string filename = $"{OutputFile}\\model_{i}.obj";
-
-                    using (StreamWriter writer = new StreamWriter($"{filename}"))
-                    {
-                        foreach (var vt in mesh.SubMeshes[i].MeshVerticies)
-                            writer.WriteLine($"v {vt.X} {vt.Y} {vt.Z}");
-
-                        foreach(var id in mesh.SubMeshes[i].MeshIndicies)
-                        {
-                            writer.WriteLine($"f {id.point1} {id.point2} {id.point3}");
-                        }
-                    } 
-                }
-            }
-           */
+            // Set properties for the FolderBrowserDialog
+            folderBrowserDialog.Description = "Select the folder to save the file";
             
+
+            // Show the FolderBrowserDialog
+            DialogResult result = folderBrowserDialog.ShowDialog();
+
+            // Process the result
+            if (result == DialogResult.OK)
+            {
+                // Get the selected folder path
+                string selectedFolderPath = folderBrowserDialog.SelectedPath;
+
+                // Perform actions with the selected folder path (e.g., save data)
+                Console.WriteLine("Selected folder: " + selectedFolderPath);
+
+                enthParser2.enthFile.ToIndividualLODOBJ(selectedFolderPath);
+            }
+            else
+            {
+                Console.WriteLine("Save operation canceled");
+            }
+
+
+
+            //enthParser2.enthFile.ToObj();
+
+
+
         }
 
         private void t_LODDisplay_AfterSelect(object sender, TreeViewEventArgs e)
@@ -211,6 +242,11 @@ namespace EnthReader2._0
             HexView hexView = new HexView();
             hexView.DisplayHexData(FileParser.LoadedFile.VertexBlocks[c_MeshBox.SelectedIndex].ReadBytesForDebug.ToArray(), FileParser.LoadedFile.VertexBlocks[c_MeshBox.SelectedIndex].STARTADDRESSFORTHIS);
             hexView.Show();*/
+        }
+
+        private void splitContainer1_Panel1_Paint(object sender, PaintEventArgs e)
+        {
+
         }
     }
 }

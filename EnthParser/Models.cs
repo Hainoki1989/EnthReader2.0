@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using static EnthParser.Models;
 
 namespace EnthParser
 {
@@ -21,6 +24,107 @@ namespace EnthParser
 
             public List<ModelBlock> ModelBlocks;
 
+
+
+            public void ToIndividualLODOBJ(string filename = null)
+            {
+                var vertexList = ModelBlocks.SelectMany(modelBlock => modelBlock.VertexBlocks).ToList();
+
+                List<Dictionary<int,int>> pairGroups = new List<Dictionary<int,int>>();
+
+                for(int i=0; i < LODAddresses.Count; i++)
+                {
+                    int StartAddress = LODAddresses[i][0];
+                    int EndAddress = (i < LODAddresses.Count-1) ? LODAddresses[i+1][0] : 0x999999;
+
+                    var input = vertexList.Where(x => x.Address >= StartAddress && x.Address < EndAddress);
+
+                    List<List<VertexBlock>> ModelSeperation = new List<List<VertexBlock>>();
+
+                    for(int f=0; f < LODAddresses[i].Count; f++)
+                    {
+                        int StartFAddress = LODAddresses[i][f];
+                        int EndFAddress = (f < LODAddresses[i].Count - 1) ? LODAddresses[i][f + 1] : 0x999999;
+
+                        var temp = input.Where(y=> y.Address >= StartFAddress && y.Address < EndFAddress);
+                        ModelSeperation.Add(temp.ToList());
+                    }
+
+
+                    ListToObj(ModelSeperation, filename, i.ToString());
+                }
+
+               
+
+            }
+
+
+            public void ListToObj( List<List<VertexBlock>> files, string folder, string model)
+            {
+                StringBuilder vertexString = new StringBuilder();
+                StringBuilder indexString = new StringBuilder();
+
+                int previousCount = 0;
+
+                for(int f=0; f<files.Count; f++)
+                {
+                    indexString.AppendLine($"o Mesh{f}");
+
+                    foreach (var block in files[f])
+                    {
+                        foreach (var vertex in block.vertexBlockData.vertices)
+                        {
+                            vertexString.AppendLine($"v {vertex.X.ToString(CultureInfo.GetCultureInfo("en-GB"))} {vertex.Y.ToString(CultureInfo.GetCultureInfo("en-GB"))} {vertex.Z.ToString(CultureInfo.GetCultureInfo("en-GB"))}");
+                        }
+
+                        foreach (var indexG in block.MeshGroup)
+                        {
+                            for (int j = 0; j < indexG.indicies.Count - 2; j++)
+                            {
+                                if (indexG.indicies[j + 2].IsValidTri)
+                                {
+                                    indexString.AppendLine($"f {indexG.indicies[j].FaceIndex + 1 + previousCount} {indexG.indicies[j + 1].FaceIndex + 1 + previousCount} {indexG.indicies[j + 2].FaceIndex + 1 + previousCount}");
+                                }
+                            }
+                        }
+
+                        previousCount += block.vertexBlockData.vertices.Count;
+                    }
+                }
+
+                string OutputText = vertexString.ToString() + "\n" + indexString.ToString();
+
+                File.WriteAllText($"{folder}\\Model_{model}.obj", OutputText);
+            }
+
+            public void ToObj(string filename = null)
+            {
+
+                foreach(var item in ModelBlocks)
+                {
+                    foreach (var VB in item.VertexBlocks)
+                    {
+                        using (StreamWriter writer = new StreamWriter($"output\\{VB.Address}.obj"))
+                        {
+                            foreach (var vertex in VB.vertexBlockData.vertices)
+                            {
+                                writer.WriteLine($"v {vertex.X.ToString(CultureInfo.GetCultureInfo("en-GB"))} {vertex.Y.ToString(CultureInfo.GetCultureInfo("en-GB"))} {vertex.Z.ToString(CultureInfo.GetCultureInfo("en-GB"))}");
+                            }
+
+                            foreach(var index in VB.MeshGroup)
+                            {
+                                for(int i=0; i<index.indicies.Count-2; i++)
+                                {
+                                    if (index.indicies[i+2].IsValidTri)
+                                    {
+                                        writer.WriteLine($"f {index.indicies[i].FaceIndex +1 } {index.indicies[i + 1].FaceIndex +1} {index.indicies[i + 2].FaceIndex +1} ");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         public class HeaderPairs

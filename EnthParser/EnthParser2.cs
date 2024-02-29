@@ -16,7 +16,7 @@ namespace EnthParser
     {
         private string filename;
 
-        EnthFile enthFile = new EnthFile();
+        public EnthFile enthFile = new EnthFile();
 
         public bool LoadFile(string filename)
         {
@@ -246,6 +246,7 @@ namespace EnthParser
         private FaceBlock GetFaceBlock(FileStream fs, CustomBinaryReader reader)
         {
             FaceBlock block = new FaceBlock();
+            block.indicies = new List<Face>();
             reader.ReadBytes(2);
             block.FaceDataCount = reader.ReadBytes(1)[0];
             reader.ReadBytes(1);
@@ -253,6 +254,7 @@ namespace EnthParser
             for(int i=0; i<block.FaceDataCount; i++)
             {
                 Face temp = new Face(reader.ReadByte(), reader.ReadByte());
+                block.indicies.Add(temp);
                 reader.ReadBytes(6);
             }
 
