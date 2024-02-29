@@ -42,7 +42,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CustomBinaryReader.cs" />
     <Compile Include="EnthParser.cs" />
+    <Compile Include="EnthParser2.cs" />
+    <Compile Include="Models.cs" />
+    <Compile Include="OBJModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

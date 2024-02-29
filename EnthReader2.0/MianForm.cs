@@ -8,10 +8,13 @@ using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Numerics;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using EnthParser;
+using Newtonsoft.Json;
 
 
 
@@ -20,7 +23,7 @@ namespace EnthReader2._0
     public partial class MianForm : Form
     {
         string selectedFileName;
-        EnthParser.EnthParser FileParser;
+        //EnthParser.EnthParser FileParser;
 
         public MianForm()
         {
@@ -30,14 +33,14 @@ namespace EnthReader2._0
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            FileParser = new EnthParser.EnthParser();
+            //FileParser = new EnthParser.EnthParser();
             t_hexDisplay.Font = new Font("Courier New", 10, FontStyle.Regular);
             t_hexDisplay.ScrollBars = ScrollBars.Vertical;
         }
 
         private void b_LoadFile_Click(object sender, EventArgs e)
         {
-            FileParser = new EnthParser.EnthParser();
+            /*FileParser = new EnthParser.EnthParser();
             t_LODDisplay.Nodes.Clear();
 
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -68,78 +71,61 @@ namespace EnthReader2._0
                     t_LODDisplay.Nodes.Add(parentNode);
                 }
 
+            }*/
+
+            EnthParser2 enthParser2 = new EnthParser2();
+
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "CAR Files (*.car)|*.car|All Files (*.*)|*.*";
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                selectedFileName = openFileDialog.FileName;
+
+                enthParser2.LoadFile(selectedFileName);
+
             }
         }
 
         private void b_ExportOBJ_Click(object sender, EventArgs e)
         {
-            string[] outputname = selectedFileName.Split('\\');
-            string OutputFolder = $"{DateTime.Now.ToString("ddMMyyyhhmmss")}\\{outputname.Last()}";
 
-            for (int i=0; i<FileParser.LoadedFile.LODAddresses.Count; i++)
+           /* var result = FileParser.LoadedFile.ToOBJ();
+
+            string json = JsonConvert.SerializeObject(result, Formatting.Indented);
+
+            Console.WriteLine("here");
+
+            string OutputFile = $"{DateTime.Now.ToString("ddMMyyyyhhmmss")}";
+
+            if (!Directory.Exists(OutputFile))
+                Directory.CreateDirectory(OutputFile);
+
+
+            string jsonFile = $"{OutputFile}\\{result.ModelName}.json";
+            File.WriteAllText(jsonFile, json);
+
+            foreach (var mesh in result.modelLods[0].Meshes) 
             {
-                int NextListStartAddress = (i == FileParser.LoadedFile.LODAddresses.Count-1) ? 0x999999 : FileParser.LoadedFile.LODAddresses[(i + 1)][0];
-
-                
-
-               
-
-                if(!Directory.Exists(OutputFolder))
-                    Directory.CreateDirectory(OutputFolder);
-
-
-
-                for(int j=0; j < FileParser.LoadedFile.LODAddresses[i].Count; j++)
+                for(int i =0; i<mesh.SubMeshes.Count; i++)
                 {
-                    string OutputLod = $"{OutputFolder}\\LOD{i}";
+                    int counter = 0;
+                    string filename = $"{OutputFile}\\model_{i}.obj";
 
-                    if (!Directory.Exists(OutputLod))
-                        Directory.CreateDirectory(OutputLod);
-
-                    int startAddress = FileParser.LoadedFile.LODAddresses[i][j];
-                    int endAddress = (j == FileParser.LoadedFile.LODAddresses[i].Count - 1) ? NextListStartAddress : FileParser.LoadedFile.LODAddresses[i][j + 1];
-
-                    var matchingGroups = FileParser.LoadedFile.VertexBlocks.Where(vertex => vertex.STARTADDRESSFORTHIS >= startAddress && vertex.STARTADDRESSFORTHIS < endAddress);
-
-                    try
+                    using (StreamWriter writer = new StreamWriter($"{filename}"))
                     {
-                        int counter = 0;
-                        foreach(var group in matchingGroups)
+                        foreach (var vt in mesh.SubMeshes[i].MeshVerticies)
+                            writer.WriteLine($"v {vt.X} {vt.Y} {vt.Z}");
+
+                        foreach(var id in mesh.SubMeshes[i].MeshIndicies)
                         {
-                            
-                            string subFolder = $"{OutputLod}\\{j}";
-
-                            if (!Directory.Exists(subFolder))
-                                Directory.CreateDirectory(subFolder);
-
-
-
-                            foreach (var vertexG in group.VertexDataList)
-                            {
-                                counter++;
-                                using (StreamWriter writer = new StreamWriter($"{subFolder}\\{counter}_output_0x{group.STARTADDRESSFORTHIS.ToString("X")}.obj"))
-                                {
-                                    foreach(var vertex in vertexG.VertexList)
-                                        writer.WriteLine($"v {vertex.X.ToString(CultureInfo.GetCultureInfo("en-GB"))} {vertex.Y.ToString(CultureInfo.GetCultureInfo("en-GB"))} {vertex.Z.ToString(CultureInfo.GetCultureInfo("en-GB"))}");
-           
-                                }
-
-                            }
+                            writer.WriteLine($"f {id.point1} {id.point2} {id.point3}");
                         }
-                    }
-                    catch(Exception ex) 
-                    { 
-                    }
-
-   
-
+                    } 
                 }
-
-
             }
-
-
-
+           */
+            
         }
 
         private void t_LODDisplay_AfterSelect(object sender, TreeViewEventArgs e)
@@ -151,7 +137,7 @@ namespace EnthReader2._0
 
         private void HandleSelectedNode(TreeNode selectedNode)
         {
-            try
+           /* try
             {
                 int Saddress = int.Parse(selectedNode.Text.Replace("0x",""), NumberStyles.HexNumber);
 
@@ -181,9 +167,22 @@ namespace EnthReader2._0
                     {
                         foreach (var vertexG in group.VertexDataList)
                         {
+                            stringBuilder.AppendLine("Vertex Group");
+
                             foreach(var vt in vertexG.VertexList)
                             {
                                 stringBuilder.AppendLine($"vertex {vt.X} {vt.Y} {vt.Z}");
+                            }
+                        }
+
+                        foreach (var index in group.FaceDataList)
+                        {
+                            stringBuilder.AppendLine("Index Group");
+
+                            foreach(var id in index.faceDataItems)
+                            {
+                                stringBuilder.Append($" {id.FaceIndex} ");
+                                stringBuilder.AppendLine();
                             }
                         }
                     }
@@ -203,14 +202,15 @@ namespace EnthReader2._0
 
             }
 
-            Console.WriteLine();
+            Console.WriteLine();*/
         }
 
         private void b_viewHex_Click(object sender, EventArgs e)
         {
+            /*
             HexView hexView = new HexView();
             hexView.DisplayHexData(FileParser.LoadedFile.VertexBlocks[c_MeshBox.SelectedIndex].ReadBytesForDebug.ToArray(), FileParser.LoadedFile.VertexBlocks[c_MeshBox.SelectedIndex].STARTADDRESSFORTHIS);
-            hexView.Show();
+            hexView.Show();*/
         }
     }
 }

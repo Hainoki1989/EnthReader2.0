@@ -3,9 +3,11 @@ using System.IO;
 using System.Linq;
 using System;
 using System.Numerics;
+using System.Net;
 
 
 
+/*
 namespace EnthParser
 {
     public class EnthParser
@@ -17,6 +19,12 @@ namespace EnthParser
         public bool LoadModelFile(string filename)
         {
             LoadedFile = new ModelFile();
+
+            string[] ModelName = filename.Split('\\');
+
+            LoadedFile.ModelName = ModelName.Last();
+
+            VertexBlock LastVertexBlock;
 
             using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read))
             {
@@ -207,25 +215,36 @@ namespace EnthParser
                                     return false;
                                 }
 
-                            GetUnknownData:
+                            GetFaceData:
 
                                 fs.Position += -2;
-                                UnknownData NewUnknownData = new UnknownData();
-                                NewUnknownData.UnknownDataCount = NewVertexBlock.AddBytesAndReturn(br.ReadBytes(1))[0];
+                                FaceData NewUnknownData = new FaceData();
+                                NewUnknownData.faceDataCount = NewVertexBlock.AddBytesAndReturn(br.ReadBytes(1))[0];
                                 NewVertexBlock.AddBytesAndReturn(br.ReadBytes(1)); //padding;
 
-                                for (int i = 0; i < NewUnknownData.UnknownDataCount; i++)
+                                for (int i = 0; i < NewUnknownData.faceDataCount; i++)
                                 {
-                                    float x = BitConverter.ToSingle(NewVertexBlock.AddBytesAndReturn(br.ReadBytes(4)), 0);
-                                    float y = BitConverter.ToSingle(NewVertexBlock.AddBytesAndReturn(br.ReadBytes(4)), 0);
+                                    //float x = BitConverter.ToSingle(NewVertexBlock.AddBytesAndReturn(br.ReadBytes(4)), 0);
+                                    // float y = BitConverter.ToSingle(NewVertexBlock.AddBytesAndReturn(br.ReadBytes(4)), 0);
 
-                                    Vector2 tempVector = new Vector2(x, y);
+                                    //Vector2 tempVector = new Vector2(x, y);
 
-                                    NewUnknownData.UnknownDataItems.Add(tempVector);
+                                    FaceDataItem tempItem = new FaceDataItem();
+
+
+                                    //tempItem.Uknwn1 = BitConverter.ToInt16(NewVertexBlock.AddBytesAndReturn(br.ReadBytes(2)), 0);
+                                    //tempItem.Uknwn2 = BitConverter.ToInt16(NewVertexBlock.AddBytesAndReturn(br.ReadBytes(2)), 0);
+                                    tempItem.FaceIndex = (NewVertexBlock.AddBytesAndReturn(br.ReadBytes(1))[0]);
+                                    tempItem.ValidByte = (NewVertexBlock.AddBytesAndReturn(br.ReadBytes(1))[0]);
+                                    NewVertexBlock.AddBytesAndReturn(br.ReadBytes(2));
+                                    NewVertexBlock.AddBytesAndReturn(br.ReadBytes(2));
+                                    NewVertexBlock.AddBytesAndReturn(br.ReadBytes(2));
+
+                                    NewUnknownData.faceDataItems.Add(tempItem);
                                 }
 
                                 ShouldBeEnd = NewVertexBlock.AddBytesAndReturn(br.ReadBytes(4));
-                                NewVertexBlock.UnknownDataList.Add(NewUnknownData);
+                                NewVertexBlock.FaceDataList.Add(NewUnknownData);
 
                                 if (!ShouldBeEnd.SequenceEqual(GlobalIdentifiers.EndIndicator))
                                 {
@@ -240,7 +259,7 @@ namespace EnthParser
                                 if (NextStepCheck.Take(2).ToArray().SequenceEqual(GlobalIdentifiers.uknownBlockIdentifierBytes.Take(2).ToArray()))
                                 {
                                     NewVertexBlock.AddBytesAndReturn(NextStepCheck.Take(2).ToArray());
-                                    goto GetUnknownData;
+                                    goto GetFaceData;
                                 }
                                 else if (NextStepCheck.SequenceEqual(GlobalIdentifiers.VertexBlockPadding))
                                 {
@@ -299,6 +318,8 @@ namespace EnthParser
             VertexBlocks = new List<VertexBlock>();
         }
 
+        public string ModelName { get; set; }
+
         public int MagicNumberBytes { get; set; }
 
         public int UnkCount { get; set; }
@@ -310,6 +331,115 @@ namespace EnthParser
         public List<List<int>> LODAddresses { get; set; }
 
         public List<VertexBlock> VertexBlocks { get; set; }
+
+
+        public OBJModel ToOBJ()
+        {
+            OBJModel model = new OBJModel();
+            model.ModelName = $"{ModelName}";
+
+            for (int i=0; i<LODAddresses.Count; i++)
+            {
+                ModelLOD tempLOD = new ModelLOD();
+                
+
+                int NextListStartAddress = (i == LODAddresses.Count - 1) ? 0x999999 : LODAddresses[(i + 1)][0];
+
+                for (int j = 0; j < LODAddresses[i].Count; j++)
+                {
+                    ModelMesh tempMesh = new ModelMesh();
+
+                    int startAddress = LODAddresses[i][j];
+                    int endAddress = (j == LODAddresses[i].Count - 1) ? NextListStartAddress : LODAddresses[i][j + 1];
+
+                    var matchingGroups = VertexBlocks.Where(vertex => vertex.STARTADDRESSFORTHIS >= startAddress && vertex.STARTADDRESSFORTHIS < endAddress);
+
+                    var test = VertexBlocks.Where(x=> x.VertexDataList.Count() >2);
+
+
+                    foreach (var group in matchingGroups)
+                    {
+
+                        bool needsCombining = false;
+                        short previousIndex = 0;
+                        short fuckyshit = 0;
+
+                        if(group.VertexDataList.Count> 1)
+                        {
+                            for(int X=0; X<group.FaceDataList.Count; X++)
+                            {
+                                if(X != 0 && needsCombining == false )
+                                {
+                                    previousIndex = group.FaceDataList[X - 1].faceDataItems.Max(obj => obj.FaceIndex);
+                                }
+                                
+                                if (group.FaceDataList[X].faceDataItems[0].FaceIndex <= (fuckyshit+ 2) && X != 0)
+                                {
+                                    needsCombining = true;
+                                }
+
+                                if(needsCombining)
+                                {
+
+                                    for (int Y = 0; Y < group.FaceDataList.Count; Y++)
+                                    {
+                                        group.FaceDataList[X].faceDataItems.ForEach(item => item.FaceIndex += previousIndex);
+                                    }
+                                    needsCombining = false;
+                                    fuckyshit = previousIndex;
+                                }
+                            }
+                        }
+                    }
+
+                    
+                   
+                    //counter for mesh
+                    int counter = 0;
+                    foreach(var group in matchingGroups)
+                    {
+                        ModelSubMesh tempSubMesh = new ModelSubMesh();
+                        
+                        foreach(var vertexG in group.VertexDataList)
+                        {
+                            tempSubMesh.MeshVerticies.AddRange(vertexG.VertexList);
+                        }
+
+                        List<int[]> ModelIndicies = new List<int[]>();
+
+                        foreach (var indexG in group.FaceDataList)
+                        {
+                          
+                            
+                            for(int k=0; k< indexG.faceDataItems.Count - 2; k++)
+                            {
+                                if (indexG.faceDataItems[k + 2].ValidByte != 128)
+                                {
+
+                                    tempSubMesh.MeshIndicies.Add(new Tri()
+                                    {
+                                        point1 = indexG.faceDataItems[k].FaceIndex,
+                                        point2 = indexG.faceDataItems[k + 1].FaceIndex,
+                                        point3 = indexG.faceDataItems[k + 2].FaceIndex,
+                                    });
+
+                                }
+                            }  
+                        }
+
+                        tempMesh.SubMeshes.Add(tempSubMesh);
+                    }
+
+                    tempLOD.Meshes.Add(tempMesh);
+                    
+                }
+
+                model.modelLods.Add(tempLOD);
+            }
+
+            
+            return model;
+        }
     }
 
     public class HeaderPairs
@@ -349,15 +479,23 @@ namespace EnthParser
 
     }
 
-    public class UnknownData
+    public class FaceDataItem
     {
-        public UnknownData()
+
+        public short FaceIndex;
+        public short ValidByte;
+  
+    }
+
+    public class FaceData
+    {
+        public FaceData()
         {
-            UnknownDataItems = new List<Vector2>();
+            faceDataItems = new List<FaceDataItem>();
         }
 
-        public int UnknownDataCount { get; set; }
-        public List<Vector2> UnknownDataItems { get; set; }
+        public int faceDataCount { get; set; }
+        public List<FaceDataItem> faceDataItems { get; set; }
     }
 
 
@@ -378,12 +516,12 @@ namespace EnthParser
         {
             header = new VertexBlockHeader();
             VertexDataList = new List<VertexData>();
-            UnknownDataList = new List<UnknownData>();
+            FaceDataList = new List<FaceData>();
             ReadBytesForDebug = new List<byte>();
         }
         public VertexBlockHeader header { get; set; }
         public List<VertexData> VertexDataList { get; set; }
-        public List<UnknownData> UnknownDataList { get; set; }
+        public List<FaceData> FaceDataList { get; set; }
     }
 
 
@@ -484,3 +622,4 @@ namespace EnthParser
 
 
 }
+*/
