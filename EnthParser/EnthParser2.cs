@@ -235,7 +235,7 @@ namespace EnthParser
                 {
                     float x = reader.ReadSingle();
                     float y = reader.ReadSingle();
-                    vertexBlock.vertexBlockData.UVs.Add(new Vector2(x, y));
+                    vertexBlock.vertexBlockData.UVs.Add(new Vector2(x, (y*-1) + 1));
                 }
 
                 byte[] ShouldBeEnd = reader.ReadBytes(4);
@@ -279,8 +279,10 @@ namespace EnthParser
             for(int i=0; i<block.FaceDataCount; i++)
             {
                 Face temp = new Face(reader.ReadByte(), reader.ReadByte());
+                reader.ReadBytes(2);
+                temp.UVIndex = reader.ReadByte();
                 block.indicies.Add(temp);
-                reader.ReadBytes(6);
+                reader.ReadBytes(3);
             }
 
             if(!reader.ReadBytes(4).SequenceEqual(GlobalIdentifiers.EndIndicator))

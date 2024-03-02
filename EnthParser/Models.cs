@@ -103,7 +103,7 @@ namespace EnthParser
                             {
                                 if (mesh.MeshGroup[ig].indicies[j + 2].IsValidTri)
                                 {
-                                    iv.AppendLine($"f {mesh.MeshGroup[ig].indicies[j].FaceIndex + 1 + counter}/{j} {mesh.MeshGroup[ig].indicies[j + 1].FaceIndex + 1 + counter}/{j} {mesh.MeshGroup[ig].indicies[j + 2].FaceIndex + 1 + counter}/{j}");
+                                    iv.AppendLine($"f {mesh.MeshGroup[ig].indicies[j].FaceIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j].UVIndex + 1 + counter} {mesh.MeshGroup[ig].indicies[j + 1].FaceIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j + 1].UVIndex + 1 + counter} {mesh.MeshGroup[ig].indicies[j + 2].FaceIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j + 2].UVIndex + 1 + counter}");
                                 }
                             }
                         }
@@ -138,7 +138,8 @@ namespace EnthParser
 
                 int groupCounter = 0;
 
-                int previousCount = 0;
+                int previousVertexCount = 0;
+                int previousUVCount = 0;
 
                 for(int f=0; f<files.Count; f++)
                 {
@@ -167,13 +168,14 @@ namespace EnthParser
                             {
                                 if (block.MeshGroup[ig].indicies[j + 2].IsValidTri)
                                 {
-                                    indexString.AppendLine($"f {block.MeshGroup[ig].indicies[j].FaceIndex + 1 + previousCount}/{IndexCounter + 1} {block.MeshGroup[ig].indicies[j + 1].FaceIndex + 1 + previousCount}/{IndexCounter + 2} {block.MeshGroup[ig].indicies[j + 2].FaceIndex + 1 + previousCount}/{IndexCounter + 3}");
+                                    indexString.AppendLine($"f {block.MeshGroup[ig].indicies[j].FaceIndex + 1 + previousVertexCount}/{block.MeshGroup[ig].indicies[j].UVIndex + 1 + previousUVCount} {block.MeshGroup[ig].indicies[j + 1].FaceIndex + 1 + previousVertexCount}/{block.MeshGroup[ig].indicies[j + 1].UVIndex + 1 + previousUVCount} {block.MeshGroup[ig].indicies[j + 2].FaceIndex + 1 + previousVertexCount}/{block.MeshGroup[ig].indicies[j + 2].UVIndex + 1 + previousUVCount}");
                                     IndexCounter++;
                                 }
                             }
                         }
 
-                        previousCount += block.vertexBlockData.vertices.Count;
+                        previousVertexCount += block.vertexBlockData.vertices.Count;
+                        previousUVCount += block.vertexBlockData.UVs.Count;
                     }
                 }
 
@@ -281,6 +283,7 @@ namespace EnthParser
 
             public short FaceIndex;
             private short ValidCount;
+            public short UVIndex;
 
             public bool IsValidTri
             {
@@ -301,7 +304,7 @@ namespace EnthParser
 
             public static byte[] VertexBlockHeaderIdenfier = new byte[]
             {
-        0x00,0x00,0x00,0x10,0xFF,0x43,0x01,0x6C
+                0x00,0x00,0x00,0x10,0xFF,0x43,0x01,0x6C
             };
 
             public static byte[] MagicNumberBytes = new byte[] { 0x87, 0xFC };
@@ -310,17 +313,17 @@ namespace EnthParser
 
             public static byte[] uknownBlockIdentifierBytes = new byte[]
             {
-        0x00,0xC0, 0x00, 0x6D
+                0x00,0xC0, 0x00, 0x6D
             };
 
             public static byte[] EndIndicator = new byte[]
             {
-        0x00,0x00,0x00,0x17
+                0x00,0x00,0x00,0x17
             };
 
             public static byte[] VertexBlockPadding = new byte[]
             {
-        0x97,0x5D, 0x00,0x00
+                0x97,0x5D, 0x00,0x00
             };
 
             public static bool ByteArraysAreEqual(byte[] array1, byte[] array2)
