@@ -80,6 +80,7 @@ namespace EnthParser
                         StringBuilder sb = new StringBuilder();
                         StringBuilder iv = new StringBuilder();
                         StringBuilder textureCoords = new StringBuilder();
+                        StringBuilder normalString = new StringBuilder();
 
                         int counter = 0;
 
@@ -90,6 +91,11 @@ namespace EnthParser
                         foreach(var vertex in mesh.vertexBlockData.vertices)
                         {
                             sb.AppendLine($"v {vertex.X.ToString(cltr)} {vertex.Y.ToString(cltr)} {vertex.Z.ToString(cltr)}");
+                        }
+
+                        foreach(var normal in mesh.vertexBlockData.Normals)
+                        {
+                            normalString.AppendLine($"vn {normal.X.ToString(CultureInfo.GetCultureInfo("en-GB"))} {normal.Y.ToString(CultureInfo.GetCultureInfo("en-GB"))} {normal.Z.ToString(CultureInfo.GetCultureInfo("en-GB"))}");
                         }
 
                         foreach (var texturecoord in mesh.vertexBlockData.UVs)
@@ -103,7 +109,19 @@ namespace EnthParser
                             {
                                 if (mesh.MeshGroup[ig].indicies[j + 2].IsValidTri)
                                 {
-                                    iv.AppendLine($"f {mesh.MeshGroup[ig].indicies[j].FaceIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j].UVIndex + 1 + counter} {mesh.MeshGroup[ig].indicies[j + 1].FaceIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j + 1].UVIndex + 1 + counter} {mesh.MeshGroup[ig].indicies[j + 2].FaceIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j + 2].UVIndex + 1 + counter}");
+                                    if (mesh.MeshGroup[ig].indicies[j + 2].isFlipped)
+                                    {
+                                        iv.AppendLine($"f {mesh.MeshGroup[ig].indicies[j + 2].FaceIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j + 2].UVIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j + 2].normalIndex + 1 + counter}" +
+                                                       $" {mesh.MeshGroup[ig].indicies[j + 1].FaceIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j + 1].UVIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j + 1].normalIndex + 1 + counter}" +
+                                                       $" {mesh.MeshGroup[ig].indicies[j].FaceIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j].UVIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j].normalIndex + 1 + counter}");
+
+                                    }
+                                    else
+                                    {
+                                        iv.AppendLine($"f {mesh.MeshGroup[ig].indicies[j].FaceIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j].UVIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j].normalIndex + 1 + counter}" +
+                                                       $" {mesh.MeshGroup[ig].indicies[j + 1].FaceIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j + 1].UVIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j + 1].normalIndex + 1 + counter}" +
+                                                       $" {mesh.MeshGroup[ig].indicies[j + 2].FaceIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j + 2].UVIndex + 1 + counter}/{mesh.MeshGroup[ig].indicies[j + 2].normalIndex + 1 + counter}");
+                                    }
                                 }
                             }
                         }
@@ -111,7 +129,7 @@ namespace EnthParser
                         counter += mesh.vertexBlockData.vertices.Count;
 
 
-                        string outputText = sb.ToString() + "\n" + textureCoords.ToString() + "\n" + iv.ToString();
+                        string outputText = sb.ToString() + "\n" + textureCoords.ToString() + "\n" + normalString.ToString() + "\n" + iv.ToString();
 
 
                         string outputFolder = $"{folder}\\LOD\\{i}";
@@ -135,11 +153,13 @@ namespace EnthParser
                 StringBuilder vertexString = new StringBuilder();
                 StringBuilder indexString = new StringBuilder();
                 StringBuilder textureCoords = new StringBuilder();
+                StringBuilder normalString = new StringBuilder();
 
                 int groupCounter = 0;
 
                 int previousVertexCount = 0;
                 int previousUVCount = 0;
+                int previousNormalCount = 0;
 
                 for(int f=0; f<files.Count; f++)
                 {
@@ -151,6 +171,11 @@ namespace EnthParser
                         {
                             vertexString.AppendLine($"v {vertex.X.ToString(CultureInfo.GetCultureInfo("en-GB"))} {vertex.Y.ToString(CultureInfo.GetCultureInfo("en-GB"))} {vertex.Z.ToString(CultureInfo.GetCultureInfo("en-GB"))}");
                             
+                        }
+
+                        foreach (var normal in block.vertexBlockData.Normals)
+                        {
+                            normalString.AppendLine($"vn {normal.X.ToString(CultureInfo.GetCultureInfo("en-GB"))} {normal.Y.ToString(CultureInfo.GetCultureInfo("en-GB"))} {normal.Z.ToString(CultureInfo.GetCultureInfo("en-GB"))}");
                         }
 
                         foreach(var texturecoord in block.vertexBlockData.UVs)
@@ -168,7 +193,21 @@ namespace EnthParser
                             {
                                 if (block.MeshGroup[ig].indicies[j + 2].IsValidTri)
                                 {
-                                    indexString.AppendLine($"f {block.MeshGroup[ig].indicies[j].FaceIndex + 1 + previousVertexCount}/{block.MeshGroup[ig].indicies[j].UVIndex + 1 + previousUVCount} {block.MeshGroup[ig].indicies[j + 1].FaceIndex + 1 + previousVertexCount}/{block.MeshGroup[ig].indicies[j + 1].UVIndex + 1 + previousUVCount} {block.MeshGroup[ig].indicies[j + 2].FaceIndex + 1 + previousVertexCount}/{block.MeshGroup[ig].indicies[j + 2].UVIndex + 1 + previousUVCount}");
+                                    if (block.MeshGroup[ig].indicies[j + 2].isFlipped)
+                                    {
+                                        indexString.AppendLine($"f {block.MeshGroup[ig].indicies[j + 2].FaceIndex + 1 + previousVertexCount}/{block.MeshGroup[ig].indicies[j + 2].UVIndex + 1 + previousUVCount}/{block.MeshGroup[ig].indicies[j + 2].normalIndex + 1 + previousNormalCount}" +
+                                                                $" {block.MeshGroup[ig].indicies[j + 1].FaceIndex + 1 + previousVertexCount}/{block.MeshGroup[ig].indicies[j + 1].UVIndex + 1 + previousUVCount}/{block.MeshGroup[ig].indicies[j + 1].normalIndex + 1 + previousNormalCount}" +
+                                                                $" {block.MeshGroup[ig].indicies[j    ].FaceIndex + 1 + previousVertexCount}/{block.MeshGroup[ig].indicies[j    ].UVIndex + 1 + previousUVCount}/{block.MeshGroup[ig].indicies[j    ].normalIndex + 1 + previousNormalCount}");
+
+                                    }
+                                    else
+                                    {
+                                        indexString.AppendLine($"f {block.MeshGroup[ig].indicies[j    ].FaceIndex + 1 + previousVertexCount}/{block.MeshGroup[ig].indicies[j    ].UVIndex + 1 + previousUVCount}/{block.MeshGroup[ig].indicies[j    ].normalIndex + 1 + previousNormalCount}" +
+                                                                $" {block.MeshGroup[ig].indicies[j + 1].FaceIndex + 1 + previousVertexCount}/{block.MeshGroup[ig].indicies[j + 1].UVIndex + 1 + previousUVCount}/{block.MeshGroup[ig].indicies[j + 1].normalIndex + 1 + previousNormalCount}" +
+                                                                $" {block.MeshGroup[ig].indicies[j + 2].FaceIndex + 1 + previousVertexCount}/{block.MeshGroup[ig].indicies[j + 2].UVIndex + 1 + previousUVCount}/{block.MeshGroup[ig].indicies[j + 2].normalIndex + 1 + previousNormalCount}");
+
+                                    }
+
                                     IndexCounter++;
                                 }
                             }
@@ -176,10 +215,11 @@ namespace EnthParser
 
                         previousVertexCount += block.vertexBlockData.vertices.Count;
                         previousUVCount += block.vertexBlockData.UVs.Count;
+                        previousNormalCount += block.vertexBlockData.Normals.Count;
                     }
                 }
 
-                string OutputText = vertexString.ToString() + "\n" + textureCoords.ToString() + "\n" +indexString.ToString();
+                string OutputText = vertexString.ToString() + "\n" + textureCoords.ToString() + "\n" + normalString.ToString() + "\n" + indexString.ToString();
 
                 File.WriteAllText($"{folder}\\Model_{model}.obj", OutputText);
             }
@@ -284,12 +324,23 @@ namespace EnthParser
             public short FaceIndex;
             private short ValidCount;
             public short UVIndex;
+            public short normalIndex;
+
+            public bool isFlipped;
 
             public bool IsValidTri
             {
                 get
                 {
                     return (ValidCount != 128);
+                }
+            }
+
+            public bool TStripRestart
+            {
+                get
+                {
+                    return (ValidCount == 0);
                 }
             }
         }

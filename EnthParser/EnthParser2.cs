@@ -215,14 +215,22 @@ namespace EnthParser
                 {
                     reader.ReadBytes(4);
 
+                    bool flipNormal = false;
                     for (int i = 0; i < vertexBlock.vertexBlockHeader.NormalCount; i++)
                     {
 
-                        float x = TwoByteToFloat(reader.ReadBytes(2));
-                        float y = TwoByteToFloat(reader.ReadBytes(2));
-                        float z = TwoByteToFloat(reader.ReadBytes(2));
+                        ushort x = BitConverter.ToUInt16(reader.ReadBytes(2), 0);
+                        ushort y = BitConverter.ToUInt16(reader.ReadBytes(2), 0);
+                        ushort z = BitConverter.ToUInt16(reader.ReadBytes(2), 0);
 
-                        vertexBlock.vertexBlockData.Normals.Add(new Vector3(x,y,z));
+                        Vector3 normal = new Vector3(x, y ,z);
+                        normal = Vector3.Normalize(normal);
+
+                        //float x = TwoByteToFloat(reader.ReadBytes(2));
+                        //float y = TwoByteToFloat(reader.ReadBytes(2));
+                        //float z = TwoByteToFloat(reader.ReadBytes(2));
+
+                        vertexBlock.vertexBlockData.Normals.Add(normal);
                     }
                 }
 
@@ -276,13 +284,30 @@ namespace EnthParser
             block.FaceDataCount = reader.ReadBytes(1)[0];
             reader.ReadBytes(1);
 
+            bool flipCheck = true;
+
             for(int i=0; i<block.FaceDataCount; i++)
             {
-                Face temp = new Face(reader.ReadByte(), reader.ReadByte());
-                reader.ReadBytes(2);
-                temp.UVIndex = reader.ReadByte();
-                block.indicies.Add(temp);
-                reader.ReadBytes(3);
+
+                Face temp = new Face(reader.ReadByte(), reader.ReadByte());             //Face Index + valid
+                temp.normalIndex = reader.ReadByte();                                   //Normal Index
+                reader.ReadByte();                                                      //skip
+                temp.UVIndex = reader.ReadByte();                                       //UV Index
+
+                if (!temp.IsValidTri)
+                {
+                    flipCheck = true;
+                }
+                else
+                {
+                    flipCheck = !flipCheck;
+                }
+
+                temp.isFlipped = flipCheck;
+
+                block.indicies.Add(temp);                                               
+
+                reader.ReadBytes(3);                                                    //skip
             }
 
             if(!reader.ReadBytes(4).SequenceEqual(GlobalIdentifiers.EndIndicator))
