@@ -79,6 +79,7 @@ namespace EnthParser
                     {
                         StringBuilder sb = new StringBuilder();
                         StringBuilder iv = new StringBuilder();
+                        StringBuilder textureCoords = new StringBuilder();
 
                         int counter = 0;
 
@@ -91,13 +92,18 @@ namespace EnthParser
                             sb.AppendLine($"v {vertex.X.ToString(cltr)} {vertex.Y.ToString(cltr)} {vertex.Z.ToString(cltr)}");
                         }
 
+                        foreach (var texturecoord in mesh.vertexBlockData.UVs)
+                        {
+                            textureCoords.AppendLine($"vt {texturecoord.X.ToString(CultureInfo.GetCultureInfo("en-GB"))} {texturecoord.Y.ToString(CultureInfo.GetCultureInfo("en-GB"))} ");
+                        }
+
                         for (int ig = 0; ig < mesh.MeshGroup.Count; ig++)
                         {
                             for (int j = 0; j < mesh.MeshGroup[ig].indicies.Count-2; j++)
                             {
                                 if (mesh.MeshGroup[ig].indicies[j + 2].IsValidTri)
                                 {
-                                    iv.AppendLine($"f {mesh.MeshGroup[ig].indicies[j].FaceIndex + 1 + counter} {mesh.MeshGroup[ig].indicies[j + 1].FaceIndex + 1 + counter} {mesh.MeshGroup[ig].indicies[j + 2].FaceIndex + 1 + counter}");
+                                    iv.AppendLine($"f {mesh.MeshGroup[ig].indicies[j].FaceIndex + 1 + counter}/{j} {mesh.MeshGroup[ig].indicies[j + 1].FaceIndex + 1 + counter}/{j} {mesh.MeshGroup[ig].indicies[j + 2].FaceIndex + 1 + counter}/{j}");
                                 }
                             }
                         }
@@ -105,7 +111,7 @@ namespace EnthParser
                         counter += mesh.vertexBlockData.vertices.Count;
 
 
-                        string outputText = sb.ToString() + "\n" + iv.ToString();
+                        string outputText = sb.ToString() + "\n" + textureCoords.ToString() + "\n" + iv.ToString();
 
 
                         string outputFolder = $"{folder}\\LOD\\{i}";
