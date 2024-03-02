@@ -29,9 +29,11 @@
         private void InitializeComponent()
         {
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.p_loadingBar = new System.Windows.Forms.ProgressBar();
             this.b_ExportOBJ = new System.Windows.Forms.Button();
             this.b_LoadFile = new System.Windows.Forms.Button();
             this.t_LODDisplay = new System.Windows.Forms.TreeView();
+            this.cb_checkInd = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -46,6 +48,8 @@
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.Controls.Add(this.cb_checkInd);
+            this.splitContainer1.Panel1.Controls.Add(this.p_loadingBar);
             this.splitContainer1.Panel1.Controls.Add(this.b_ExportOBJ);
             this.splitContainer1.Panel1.Controls.Add(this.b_LoadFile);
             this.splitContainer1.Panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.splitContainer1_Panel1_Paint);
@@ -57,9 +61,16 @@
             this.splitContainer1.SplitterDistance = 229;
             this.splitContainer1.TabIndex = 0;
             // 
+            // p_loadingBar
+            // 
+            this.p_loadingBar.Location = new System.Drawing.Point(3, 498);
+            this.p_loadingBar.Name = "p_loadingBar";
+            this.p_loadingBar.Size = new System.Drawing.Size(223, 23);
+            this.p_loadingBar.TabIndex = 5;
+            // 
             // b_ExportOBJ
             // 
-            this.b_ExportOBJ.Location = new System.Drawing.Point(12, 41);
+            this.b_ExportOBJ.Location = new System.Drawing.Point(12, 64);
             this.b_ExportOBJ.Name = "b_ExportOBJ";
             this.b_ExportOBJ.Size = new System.Drawing.Size(185, 23);
             this.b_ExportOBJ.TabIndex = 4;
@@ -86,6 +97,16 @@
             this.t_LODDisplay.TabIndex = 2;
             this.t_LODDisplay.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.t_LODDisplay_AfterSelect);
             // 
+            // cb_checkInd
+            // 
+            this.cb_checkInd.AutoSize = true;
+            this.cb_checkInd.Location = new System.Drawing.Point(12, 41);
+            this.cb_checkInd.Name = "cb_checkInd";
+            this.cb_checkInd.Size = new System.Drawing.Size(158, 17);
+            this.cb_checkInd.TabIndex = 6;
+            this.cb_checkInd.Text = "Export As indicidual Meshes";
+            this.cb_checkInd.UseVisualStyleBackColor = true;
+            // 
             // MianForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -96,6 +117,7 @@
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.splitContainer1.Panel1.ResumeLayout(false);
+            this.splitContainer1.Panel1.PerformLayout();
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
@@ -109,6 +131,8 @@
         private System.Windows.Forms.Button b_ExportOBJ;
         private System.Windows.Forms.Button b_LoadFile;
         private System.Windows.Forms.TreeView t_LODDisplay;
+        private System.Windows.Forms.ProgressBar p_loadingBar;
+        private System.Windows.Forms.CheckBox cb_checkInd;
     }
 }
 

@@ -100,16 +100,26 @@ namespace EnthReader2._0
 
                 enthParser2.LoadFile(selectedFileName);
 
-                string json = JsonConvert.SerializeObject(enthParser2.enthFile, Formatting.Indented);
+                Loading loadingForm = new Loading() ;
+
+                Task.Run(() =>
+                {
+                    // Create an instance of the form
+                    loadingForm = new Loading();
+
+                    // Show the form
+                    Application.Run(loadingForm);
+                });
 
                 //t_hexDisplay.Text = json;
 
-                JObject jsonObject = JObject.Parse(json);
-
-                PopulateTreeView(jsonObject, t_LODDisplay.Nodes);
+                DisplayFile();
 
 
-                File.WriteAllText("DEBUGOUTPUT.json",json);
+                loadingForm.Invoke((MethodInvoker)delegate
+                {
+                    loadingForm.Close();
+                });
 
             }
 
@@ -123,6 +133,17 @@ namespace EnthReader2._0
                 
         }
 
+        private void DisplayFile()
+        {
+            string json = JsonConvert.SerializeObject(enthParser2.enthFile, Formatting.Indented);
+            JObject jsonObject = JObject.Parse(json);
+
+            PopulateTreeView(jsonObject, t_LODDisplay.Nodes);
+
+
+            File.WriteAllText("DEBUGOUTPUT.json", json);
+        }
+
         private void b_ExportOBJ_Click(object sender, EventArgs e)
         {
 
@@ -130,6 +151,9 @@ namespace EnthReader2._0
 
             // Set properties for the FolderBrowserDialog
             folderBrowserDialog.Description = "Select the folder to save the file";
+
+            string[] split = selectedFileName.Split('\\');
+            string[] name = split.Last().Split('.');
             
 
             // Show the FolderBrowserDialog
@@ -144,7 +168,15 @@ namespace EnthReader2._0
                 // Perform actions with the selected folder path (e.g., save data)
                 Console.WriteLine("Selected folder: " + selectedFolderPath);
 
-                enthParser2.enthFile.ToIndividualLODOBJ(selectedFolderPath);
+                if(cb_checkInd.Checked)
+                {
+                    enthParser2.enthFile.ExportIndivdualLODMeshes(selectedFolderPath, name.First());
+                }
+                else
+                {
+                    enthParser2.enthFile.ToIndividualLODOBJ(selectedFolderPath, name.First());
+                }
+                
             }
             else
             {

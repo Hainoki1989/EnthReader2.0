@@ -75,6 +75,12 @@ namespace EnthParser
                             ModelBlock returnBlock = GetModelBlock(fs,reader);
                             if( returnBlock != null )
                             {
+                                if (returnBlock.VertexBlocks == null)
+                                    return true;
+
+                                if (returnBlock.VertexBlocks.Count == 0)
+                                    return true;
+
                                 enthFile.ModelBlocks.Add(returnBlock);
                             }
                             else
@@ -121,25 +127,44 @@ namespace EnthParser
                 Identifier = reader.ReadBytes(4);
                 fs.Position += -4;
 
-                if(Identifier.SequenceEqual(new byte[] { 0x97,0x5d,0x0,0x0}))
+                if (Identifier.SequenceEqual(new byte[] { 0x97, 0x5d, 0x0, 0x0 }))
                 {
-                    //clear offset
-                    var positionOffset = (fs.Position % 16) ==0 ? 16 : (fs.Position % 16);
-                    var offset = 16- positionOffset;
-                    reader.ReadBytes((int)offset);
-
-                    //re-readbytes
-                    Identifier = reader.ReadBytes(4);
-                    fs.Position += -4;
-
-                    if (Identifier.SequenceEqual(new byte[] { 0xff, 0xff, 0xff, 0xff }))
+                    byte[] fullPadding = reader.ReadBytes(16);
+                    fs.Position += -16;
+                    if (fullPadding.SequenceEqual(new byte[] { 0x97, 0x5d, 0x0, 0x0, 0x97, 0x5d, 0x0, 0x0, 0x97, 0x5d, 0x0, 0x0, 0x97, 0x5d, 0x0, 0x0 }))
+                    {
+                        reader.ReadBytes(16);
+                    }
+                    else
                     {
                         //clear offset
-                        positionOffset = (fs.Position % 16) == 0 ? 16 : (fs.Position % 16);
-                        offset = 16 - positionOffset;
+                        var positionOffset = (fs.Position % 16) == 0 ? 16 : (fs.Position % 16);
+                        var offset = 16 - positionOffset;
                         reader.ReadBytes((int)offset);
                     }
                 }
+
+                Identifier = reader.ReadBytes(4);
+                fs.Position += -4;
+
+                if (Identifier.SequenceEqual(new byte[] { 0xff, 0xff, 0xff, 0xff }))
+                {
+                        byte[] fullRow = reader.ReadBytes(16);
+                        fs.Position += -16;
+
+                        if (fullRow.SequenceEqual(new byte[] { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }))
+                        {
+                            reader.ReadBytes(16);
+                        }
+                        else
+                        {
+                            //clear offset
+                            var positionOffset = (fs.Position % 16) == 0 ? 16 : (fs.Position % 16);
+                            var offset = 16 - positionOffset;
+                            reader.ReadBytes((int)offset);
+                        }
+                }
+                
 
             }
 
@@ -292,7 +317,8 @@ namespace EnthParser
 
                 if(GlobalIdentifiers.IsDataBlockInModelHeader(Chunk))
                 {
-                    int headerTemp = BitConverter.ToInt32(Chunk.Take(4).ToArray(), 0) + GlobalIdentifiers.Offset;
+                    int headerTemp = BitConverter.ToInt32(Chunk.Take(4).ToArray(), 0);
+                    headerTemp += GlobalIdentifiers.Offset;
                     temp.Add(headerTemp);
                 }
                 else if(GlobalIdentifiers.IsSpacerBlockInModelHeader(Chunk))

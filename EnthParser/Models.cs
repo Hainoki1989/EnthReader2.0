@@ -26,43 +26,111 @@ namespace EnthParser
 
 
 
-            public void ToIndividualLODOBJ(string filename = null)
+            public void ToIndividualLODOBJ(string filename = null, string modelname = null, bool MergeVerticies = false)
             {
                 var vertexList = ModelBlocks.SelectMany(modelBlock => modelBlock.VertexBlocks).ToList();
 
-                List<Dictionary<int,int>> pairGroups = new List<Dictionary<int,int>>();
+               
 
-                for(int i=0; i < LODAddresses.Count; i++)
+                for (int i = 0; i < LODAddresses.Count; i++)
                 {
                     int StartAddress = LODAddresses[i][0];
-                    int EndAddress = (i < LODAddresses.Count-1) ? LODAddresses[i+1][0] : 0x999999;
+                    int EndAddress = (i < LODAddresses.Count - 1) ? LODAddresses[i + 1][0] : 0x999999;
 
                     var input = vertexList.Where(x => x.Address >= StartAddress && x.Address < EndAddress);
 
                     List<List<VertexBlock>> ModelSeperation = new List<List<VertexBlock>>();
 
-                    for(int f=0; f < LODAddresses[i].Count; f++)
+                    for (int f = 0; f < LODAddresses[i].Count; f++)
                     {
                         int StartFAddress = LODAddresses[i][f];
                         int EndFAddress = (f < LODAddresses[i].Count - 1) ? LODAddresses[i][f + 1] : 0x999999;
 
-                        var temp = input.Where(y=> y.Address >= StartFAddress && y.Address < EndFAddress);
+                        var temp = input.Where(y => y.Address >= StartFAddress && y.Address < EndFAddress);
                         ModelSeperation.Add(temp.ToList());
                     }
 
-
-                    ListToObj(ModelSeperation, filename, i.ToString());
+                    ListToObj(ModelSeperation, filename, $"{modelname}_{i.ToString()}");
                 }
-
-               
-
             }
+
+
+            public void ExportIndivdualLODMeshes(string folder, string model)
+            {
+
+                var cltr = CultureInfo.GetCultureInfo("en-GB");
+
+                string LODFolder = $"{folder}\\LOD";
+                if(!Directory.Exists(LODFolder))
+                    Directory.CreateDirectory(LODFolder);
+
+                var vertexList = ModelBlocks.SelectMany(modelBlock => modelBlock.VertexBlocks).ToList();
+
+                for (int i = 0; i < LODAddresses.Count; i++)
+                {
+                    int StartAddress = LODAddresses[i][0];
+                    int EndAddress = (i < LODAddresses.Count - 1) ? LODAddresses[i + 1][0] : 0x999999;
+
+
+                    var input = vertexList.Where(x => x.Address >= StartAddress && x.Address < EndAddress);
+
+                    int meshCounter = 0;
+                    foreach(var mesh in input)
+                    {
+                        StringBuilder sb = new StringBuilder();
+                        StringBuilder iv = new StringBuilder();
+
+                        int counter = 0;
+
+                        long Address = 0;
+
+                        Address = mesh.Address;
+
+                        foreach(var vertex in mesh.vertexBlockData.vertices)
+                        {
+                            sb.AppendLine($"v {vertex.X.ToString(cltr)} {vertex.Y.ToString(cltr)} {vertex.Z.ToString(cltr)}");
+                        }
+
+                        for (int ig = 0; ig < mesh.MeshGroup.Count; ig++)
+                        {
+                            for (int j = 0; j < mesh.MeshGroup[ig].indicies.Count-2; j++)
+                            {
+                                if (mesh.MeshGroup[ig].indicies[j + 2].IsValidTri)
+                                {
+                                    iv.AppendLine($"f {mesh.MeshGroup[ig].indicies[j].FaceIndex + 1 + counter} {mesh.MeshGroup[ig].indicies[j + 1].FaceIndex + 1 + counter} {mesh.MeshGroup[ig].indicies[j + 2].FaceIndex + 1 + counter}");
+                                }
+                            }
+                        }
+
+                        counter += mesh.vertexBlockData.vertices.Count;
+
+
+                        string outputText = sb.ToString() + "\n" + iv.ToString();
+
+
+                        string outputFolder = $"{folder}\\LOD\\{i}";
+
+                        if(!Directory.Exists(outputFolder))
+                            Directory.CreateDirectory(outputFolder);
+
+                        File.WriteAllText($"{folder}\\LOD\\{i}\\{meshCounter}_{model}_{Address.ToString("X")}.obj", outputText);
+                        meshCounter++;
+                    }
+
+                }
+            }
+
+
+            
 
 
             public void ListToObj( List<List<VertexBlock>> files, string folder, string model)
             {
                 StringBuilder vertexString = new StringBuilder();
                 StringBuilder indexString = new StringBuilder();
+                StringBuilder textureCoords = new StringBuilder();
+
+                int groupCounter = 0;
 
                 int previousCount = 0;
 
@@ -75,15 +143,26 @@ namespace EnthParser
                         foreach (var vertex in block.vertexBlockData.vertices)
                         {
                             vertexString.AppendLine($"v {vertex.X.ToString(CultureInfo.GetCultureInfo("en-GB"))} {vertex.Y.ToString(CultureInfo.GetCultureInfo("en-GB"))} {vertex.Z.ToString(CultureInfo.GetCultureInfo("en-GB"))}");
+                            
                         }
 
-                        foreach (var indexG in block.MeshGroup)
+                        foreach(var texturecoord in block.vertexBlockData.UVs)
                         {
-                            for (int j = 0; j < indexG.indicies.Count - 2; j++)
+                            textureCoords.AppendLine($"vt {texturecoord.X.ToString(CultureInfo.GetCultureInfo("en-GB"))} {texturecoord.Y.ToString(CultureInfo.GetCultureInfo("en-GB"))} ");
+                        }
+
+                        int IndexCounter = 0;
+                        //foreach (var indexG in block.MeshGroup)
+                        for (int ig = 0; ig < block.MeshGroup.Count; ig++)
+                        {
+                            indexString.AppendLine($"g group{groupCounter++}");
+
+                            for (int j = 0; j < block.MeshGroup[ig].indicies.Count - 2; j++)
                             {
-                                if (indexG.indicies[j + 2].IsValidTri)
+                                if (block.MeshGroup[ig].indicies[j + 2].IsValidTri)
                                 {
-                                    indexString.AppendLine($"f {indexG.indicies[j].FaceIndex + 1 + previousCount} {indexG.indicies[j + 1].FaceIndex + 1 + previousCount} {indexG.indicies[j + 2].FaceIndex + 1 + previousCount}");
+                                    indexString.AppendLine($"f {block.MeshGroup[ig].indicies[j].FaceIndex + 1 + previousCount}/{IndexCounter + 1} {block.MeshGroup[ig].indicies[j + 1].FaceIndex + 1 + previousCount}/{IndexCounter + 2} {block.MeshGroup[ig].indicies[j + 2].FaceIndex + 1 + previousCount}/{IndexCounter + 3}");
+                                    IndexCounter++;
                                 }
                             }
                         }
@@ -92,7 +171,7 @@ namespace EnthParser
                     }
                 }
 
-                string OutputText = vertexString.ToString() + "\n" + indexString.ToString();
+                string OutputText = vertexString.ToString() + "\n" + textureCoords.ToString() + "\n" +indexString.ToString();
 
                 File.WriteAllText($"{folder}\\Model_{model}.obj", OutputText);
             }
@@ -117,7 +196,7 @@ namespace EnthParser
                                 {
                                     if (index.indicies[i+2].IsValidTri)
                                     {
-                                        writer.WriteLine($"f {index.indicies[i].FaceIndex +1 } {index.indicies[i + 1].FaceIndex +1} {index.indicies[i + 2].FaceIndex +1} ");
+                                        writer.WriteLine($"f {index.indicies[i].FaceIndex +1 }/{i} {index.indicies[i + 1].FaceIndex +1}/{i} {index.indicies[i + 2].FaceIndex +1}/{i} ");
                                     }
                                 }
                             }
